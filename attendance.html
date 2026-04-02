@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Attendance Calculator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: sans-serif; background: #f4f4f4; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem; }
+  .card { background: #fff; border-radius: 12px; padding: 2rem; width: 100%; max-width: 480px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .sub { font-size: 13px; color: #888; margin-bottom: 1.5rem; }
+  .row { display: flex; gap: 12px; margin-bottom: 12px; }
+  .field { flex: 1; }
+  label { display: block; font-size: 13px; color: #555; margin-bottom: 5px; }
+  input { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; outline: none; }
+  input:focus { border-color: #6c63ff; }
+  .bar-wrap { background: #eee; border-radius: 99px; height: 8px; margin: 1.2rem 0 6px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; transition: width 0.3s, background 0.3s; }
+  .bar-labels { display: flex; justify-content: space-between; font-size: 12px; color: #888; }
+  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 1.2rem 0; }
+  .metric { background: #f8f8f8; border-radius: 8px; padding: 12px; text-align: center; }
+  .metric-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+  .metric-value { font-size: 22px; font-weight: 600; }
+  .msg { font-size: 13px; color: #555; padding: 10px 14px; border-radius: 8px; background: #f8f8f8; border-left: 3px solid #ccc; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Attendance Calculator</h1>
+  <p class="sub">How many classes can you bunk?</p>
+ 
+  <div class="row">
+    <div class="field">
+      <label>Total classes held</label>
+      <input type="number" id="total" min="0" value="60" />
+    </div>
+    <div class="field">
+      <label>Classes attended</label>
+      <input type="number" id="attended" min="0" value="45" />
+    </div>
+  </div>
+  <div class="field" style="margin-bottom:12px">
+    <label>Required % (e.g. 75)</label>
+    <input type="number" id="required" min="1" max="100" value="75" />
+  </div>
+ 
+  <div class="bar-wrap">
+    <div class="bar-fill" id="bar" style="width:0%"></div>
+  </div>
+  <div class="bar-labels">
+    <span id="pct-label">0%</span>
+    <span id="req-label">Target: 75%</span>
+  </div>
+ 
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label">Current %</div>
+      <div class="metric-value" id="cur-pct">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Can bunk</div>
+      <div class="metric-value" id="can-miss" style="color:#1a9e6e">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Need to attend</div>
+      <div class="metric-value" id="need-attend" style="color:#e24b4a">—</div>
+    </div>
+  </div>
+ 
+  <div class="msg" id="msg">Enter your class details above.</div>
+</div>
+ 
+<script>
+  ['total','attended','required'].forEach(id =>
+    document.getElementById(id).addEventListener('input', calc)
+  );
+ 
+  function calc() {
+    const T = parseInt(document.getElementById('total').value) || 0;
+    const A = parseInt(document.getElementById('attended').value) || 0;
+    const R = parseFloat(document.getElementById('required').value) || 75;
+ 
+    const cur = T > 0 ? (A / T) * 100 : 0;
+ 
+    document.getElementById('cur-pct').textContent = cur.toFixed(1) + '%';
+    document.getElementById('pct-label').textContent = cur.toFixed(1) + '%';
+    document.getElementById('req-label').textContent = 'Target: ' + R + '%';
+ 
+    const bar = document.getElementById('bar');
+    bar.style.width = Math.min(cur, 100) + '%';
+    bar.style.background = cur >= R ? '#1a9e6e' : cur >= R - 10 ? '#e09f2e' : '#e24b4a';
+ 
+    const msg = document.getElementById('msg');
+ 
+    if (T === 0) {
+      document.getElementById('can-miss').textContent = '—';
+      document.getElementById('need-attend').textContent = '—';
+      msg.textContent = 'Enter your class details above.';
+      msg.style.borderColor = '#ccc';
+      return;
+    }
+ 
+    if (cur >= R) {
+      const canMiss = Math.floor((A - R / 100 * T) / (1 - R / 100));
+      document.getElementById('can-miss').textContent = Math.max(canMiss, 0);
+      document.getElementById('need-attend').textContent = '0';
+      msg.textContent = canMiss > 0
+        ? `You can skip ${canMiss} more class${canMiss !== 1 ? 'es' : ''} and still meet ${R}%.`
+        : `You're exactly at ${R}%. No room to bunk!`;
+      msg.style.borderColor = '#1a9e6e';
+    } else {
+      const need = Math.ceil((R / 100 * T - A) / (1 - R / 100));
+      document.getElementById('can-miss').textContent = '0';
+      document.getElementById('need-attend').textContent = need;
+      msg.textContent = `You need to attend ${need} consecutive class${need !== 1 ? 'es' : ''} to reach ${R}%.`;
+      msg.style.borderColor = '#e24b4a';
+    }
+  }
+ 
+  calc();
+</script>
+</body>
+</html>
+ 
